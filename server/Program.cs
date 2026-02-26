@@ -128,8 +128,11 @@ app.UseCors(c =>
         .SetIsOriginAllowed(_ => true));
 
 
+
+
  var mqttClient = app.Services.GetRequiredService<IMqttClientService>();
- await mqttClient.ConnectAsync(connectionStrings.MqttBroker, connectionStrings.MqttPort, "", "");
+ await mqttClient.ConnectAsync("broker.hivemq.com", 1883);
+ // await mqttClient.ConnectAsync(connectionStrings.MqttBroker, connectionStrings.MqttPort, "", "");
 app.GenerateApiClientsFromOpenApi("../client/src/generated-ts-client.ts", "./openapi.json").GetAwaiter().GetResult();
 
 using(var scope = app.Services.CreateScope())
