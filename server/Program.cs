@@ -71,6 +71,7 @@ builder.Services.AddInMemorySseBackplane();
 builder.Services.AddEfRealtime();
 builder.Services.AddGroupRealtime();
 
+// i was here
 
 builder.Services.AddDbContext<MyDbContext>((sp, conf) =>
 {
