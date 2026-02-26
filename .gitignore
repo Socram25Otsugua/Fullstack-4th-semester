@@ -1,0 +1,56 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# .NET
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+*.user
+*.cache
+*.log
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.VisualState.xml
+*.ncrunchproject
+*.ncrunchsolution
+packages/
+*.nuget.props
+*.nuget.targets
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm
+.yarn-integrity
+dist/
+dist-ssr/
+*.local
+
+# Env and secrets
+.env
+.env.*
+!.env.example
+appsettings.Development.json
+**/appsettings.Development.json
+
+# Misc
+*.sw?
+*.bak
+*.tmp
