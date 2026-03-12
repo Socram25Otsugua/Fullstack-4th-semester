@@ -22,7 +22,7 @@ public class JwtService
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.Secret));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var expires = DateTime.UtcNow.AddMinutes(_options.ExpiryMinutes);
-
+        
         var claims = new[]
         {
             new Claim(ClaimTypes.NameIdentifier, userId),
