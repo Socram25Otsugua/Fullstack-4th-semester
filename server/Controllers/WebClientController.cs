@@ -12,7 +12,6 @@ using server.Services;
 
 namespace server.Controllers;
 
-#pragma warning disable CS9107
 public class WebClientController(
     ISseBackplane backplane,
     IRealtimeManager realtimeManager,
@@ -60,6 +59,24 @@ public class WebClientController(
             .Take(500)
             .ToListAsync();
         return new RealtimeListenResponse<List<TurbineMetric>>(group, data);
+    }
+
+    [HttpGet(nameof(GetAlerts))]
+    public async Task<RealtimeListenResponse<List<Alert>>> GetAlerts(string connectionId)
+    {
+        var group = "alerts";
+        await backplane.Groups.AddToGroupAsync(connectionId, group);
+        realtimeManager.Subscribe<MyDbContext>(connectionId, group,
+            criteria: snapshot => snapshot.HasChanges<Alert>(),
+            query: async context => await context.Alerts
+                .OrderByDescending(a => a.Timestamp)
+                .Take(200)
+                .ToListAsync());
+        var data = await db.Alerts
+            .OrderByDescending(a => a.Timestamp)
+            .Take(200)
+            .ToListAsync();
+        return new RealtimeListenResponse<List<Alert>>(group, data);
     }
 
     [HttpGet(nameof(GetOperatorCommands))]
