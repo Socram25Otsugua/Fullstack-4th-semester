@@ -34,3 +34,14 @@ CREATE TABLE iot_weatherstation."Users" (
                                             "Hash" text NOT NULL,
                                             CONSTRAINT "PK_Users" PRIMARY KEY ("Id")
 );
+
+
+CREATE TABLE iot_weatherstation."Alerts" (
+    "Id" uuid NOT NULL,
+    "TurbineId" text NOT NULL,
+    "Severity" integer NOT NULL,
+    "Message" text NOT NULL,
+    "Timestamp" timestamp with time zone NOT NULL,
+    "Acknowledged" boolean NOT NULL,
+    CONSTRAINT "PK_Alerts" PRIMARY KEY ("Id")
+);

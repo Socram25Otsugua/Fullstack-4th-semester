@@ -20,6 +20,25 @@ public class MyDbContext : DbContext
     public DbSet<WindTurbine> WindTurbines { get; set; }
     public DbSet<TurbineMetric> TurbineMetrics { get; set; }
     public DbSet<OperatorCommand> OperatorCommands { get; set; }
+    public DbSet<Alert> Alerts { get; set; }
+}
+
+public enum AlertSeverity
+{
+    Info,
+    Warning,
+    Critical
+}
+
+[PrimaryKey(nameof(Id))]
+public class Alert
+{
+    public Guid Id { get; set; }
+    public string TurbineId { get; set; }
+    public AlertSeverity Severity { get; set; }
+    public string Message { get; set; }
+    public DateTimeOffset Timestamp { get; set; }
+    public bool Acknowledged { get; set; }
 }
 
 [PrimaryKey(nameof(Id))]

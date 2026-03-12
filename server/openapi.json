@@ -146,6 +146,36 @@
         }
       }
     },
+    "/GetAlerts": {
+      "get": {
+        "tags": [
+          "WebClient"
+        ],
+        "operationId": "WebClient_GetAlerts",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RealtimeListenResponseOfListOfAlert"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/GetOperatorCommands": {
       "get": {
         "tags": [
@@ -491,6 +521,67 @@
             "format": "double"
           }
         }
+      },
+      "RealtimeListenResponseOfListOfAlert": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RealtimeListenResponse"
+          },
+          {
+            "type": "object",
+            "description": "Returned by subscribe endpoints with initial data. The client receives the current state\nimmediately and knows which SSE group to listen on for subsequent updates.",
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "type": "array",
+                "nullable": true,
+                "items": {
+                  "$ref": "#/components/schemas/Alert"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "Alert": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "turbineId": {
+            "type": "string"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/AlertSeverity"
+          },
+          "message": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "acknowledged": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AlertSeverity": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Info",
+          "Warning",
+          "Critical"
+        ],
+        "enum": [
+          0,
+          1,
+          2
+        ]
       },
       "RealtimeListenResponseOfListOfOperatorCommand": {
         "allOf": [

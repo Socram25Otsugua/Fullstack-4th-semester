@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 import { StateleSSEClient } from 'statele-sse'
 import {
+  type Alert,
   type OperatorCommand,
   type SendTurbineCommandRequest,
   type TurbineMetric,
@@ -143,6 +144,23 @@ function CompassIcon({ className }: { className?: string }) {
   )
 }
 
+function BladeIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M12 2v20M12 2l4 6h-8l4-6M12 22l-4-6h8l-4 6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M4 12h16" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function VibrationIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M3 12h2M5 8v8M9 10v4M13 8v8M17 10v4M19 12h2M21 8v8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 function SlidersIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -163,6 +181,7 @@ function App() {
   const [turbines, setTurbines] = useState<WindTurbine[]>([])
   const [metrics, setMetrics] = useState<TurbineMetric[]>([])
   const [operatorCommands, setOperatorCommands] = useState<OperatorCommand[]>([])
+  const [alerts, setAlerts] = useState<Alert[]>([])
   const [selectedTurbineId, setSelectedTurbineId] = useState<string | null>(null)
   const [token, setToken] = useState<string | null>(getStoredToken)
   const [loginUser, setLoginUser] = useState('')
@@ -250,9 +269,14 @@ function App() {
       (id) => restClient.getOperatorCommands(id, selectedTurbineId ?? undefined),
       (data) => setOperatorCommands(data ?? [])
     )
+    const unsubAlerts = sse.listen<Alert[]>(
+      (id) => restClient.getAlerts(id),
+      (data) => setAlerts(data ?? [])
+    )
     return () => {
       unsubTurbines()
       unsubCommands()
+      unsubAlerts()
     }
   }, [selectedTurbineId])
 
@@ -273,6 +297,8 @@ function App() {
     power: m.powerOutputKw,
     wind: m.windSpeedMs,
     temp: m.temperature,
+    bladeAngle: m.bladeAngleDeg,
+    vibration: m.vibration,
   }))
 
   const selectedTurbine = turbines.find((t) => t.id === selectedTurbineId)
@@ -353,6 +379,29 @@ function App() {
                 </button>
               ))}
             </div>
+            <div className="rounded-xl bg-white/5 border border-white/10 p-5">
+              <h3 className="text-sm font-medium text-white/70 mb-4 flex items-center gap-2">
+                <AlertIcon className="w-5 h-5 text-amber-400" />
+                Alerts
+              </h3>
+              <div className="space-y-2 max-h-32 overflow-y-auto">
+                {(alerts ?? []).map((a) => (
+                  <div
+                    key={a.id}
+                    className={`p-2 rounded-lg text-sm flex flex-wrap items-center gap-2 border ${
+                      a.severity === 2 ? 'bg-red-500/10 border-red-500/40' : a.severity === 1 ? 'bg-amber-500/10 border-amber-500/40' : 'bg-white/5 border-white/10'
+                    }`}
+                  >
+                    <span className="text-white/80">{a.message}</span>
+                    <span className="text-white/50 text-xs">{a.turbineId}</span>
+                    <span className="text-white/40 text-xs">{formatTime(a.timestamp)}</span>
+                  </div>
+                ))}
+                {(!alerts || alerts.length === 0) && (
+                  <p className="text-white/40 text-sm">No alerts</p>
+                )}
+              </div>
+            </div>
           </div>
         ) : selectedTurbine ? (
           <div className="space-y-6">
@@ -374,7 +423,7 @@ function App() {
               </span>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
               <div className="p-5 rounded-xl bg-white/5 border border-white/10 flex items-center gap-4">
                 <WindIcon className="w-8 h-8 text-cyan-400 flex-shrink-0" />
                 <div>
@@ -403,14 +452,28 @@ function App() {
                   <div className="text-xl font-mono font-semibold">{latestMetric?.temperature?.toFixed(2) ?? '-'} °C</div>
                 </div>
               </div>
+              <div className="p-5 rounded-xl bg-white/5 border border-white/10 flex items-center gap-4">
+                <BladeIcon className="w-8 h-8 text-violet-400 flex-shrink-0" />
+                <div>
+                  <div className="text-xs text-white/50">Blade Angle</div>
+                  <div className="text-xl font-mono font-semibold">{latestMetric?.bladeAngleDeg != null ? `${latestMetric.bladeAngleDeg.toFixed(2)}°` : '-'}</div>
+                </div>
+              </div>
+              <div className="p-5 rounded-xl bg-white/5 border border-white/10 flex items-center gap-4">
+                <VibrationIcon className="w-8 h-8 text-orange-400 flex-shrink-0" />
+                <div>
+                  <div className="text-xs text-white/50">Vibration</div>
+                  <div className="text-xl font-mono font-semibold">{latestMetric?.vibration != null ? latestMetric.vibration.toFixed(2) : '-'}</div>
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
               <div className="xl:col-span-2 space-y-6">
                 <div className="rounded-xl bg-white/5 border border-white/10 p-5">
-                  <h3 className="text-sm font-medium text-white/70 mb-4">Power & Wind Performance</h3>
-                  <div className="w-full relative min-w-0" style={{ width: '100%', minHeight: 280, height: 280 }}>
-                    <ResponsiveContainer width="100%" height={280} minWidth={0} minHeight={1} initialDimension={{ width: 400, height: 280 }}>
+                  <h3 className="text-sm font-medium text-white/70 mb-4">Power Performance</h3>
+                  <div className="w-full relative min-w-0" style={{ width: '100%', minHeight: 220, height: 220 }}>
+                    <ResponsiveContainer width="100%" height={220} minWidth={0} minHeight={1} initialDimension={{ width: 400, height: 220 }}>
                       <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
                         <defs>
                           <linearGradient id="powerGradient" x1="0" y1="0" x2="0" y2="1">
@@ -423,7 +486,6 @@ function App() {
                         <YAxis tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.6)' }} stroke="rgba(255,255,255,0.3)" />
                         <Tooltip contentStyle={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.15)' }} />
                         <Area type="monotone" dataKey="power" stroke="#22c55e" fill="url(#powerGradient)" strokeWidth={2} name="Power (kW)" />
-                        <Line type="monotone" dataKey="wind" stroke="#3b82f6" dot={false} strokeWidth={2} name="Wind (m/s)" />
                       </AreaChart>
                     </ResponsiveContainer>
                     {chartData.length === 0 && (
@@ -435,7 +497,33 @@ function App() {
                 </div>
 
                 <div className="rounded-xl bg-white/5 border border-white/10 p-5">
-                  <h3 className="text-sm font-medium text-white/70 mb-4">Temperature Monitoring</h3>
+                  <h3 className="text-sm font-medium text-white/70 mb-4">Wind Performance</h3>
+                  <div className="w-full relative min-w-0" style={{ width: '100%', minHeight: 220, height: 220 }}>
+                    <ResponsiveContainer width="100%" height={220} minWidth={0} minHeight={1} initialDimension={{ width: 400, height: 220 }}>
+                      <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+                        <defs>
+                          <linearGradient id="windGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.4} />
+                            <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                        <XAxis dataKey="time" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.6)' }} stroke="rgba(255,255,255,0.3)" />
+                        <YAxis tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.6)' }} stroke="rgba(255,255,255,0.3)" />
+                        <Tooltip contentStyle={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.15)' }} />
+                        <Area type="monotone" dataKey="wind" stroke="#3b82f6" fill="url(#windGradient)" strokeWidth={2} name="Wind (m/s)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                    {chartData.length === 0 && (
+                      <div className="absolute inset-0 flex items-center justify-center text-white/40 text-sm">
+                        Waiting for metrics…
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-xl bg-white/5 border border-white/10 p-5">
+                  <h3 className="text-sm font-medium text-white/70 mb-4">Temperature, Blade Angle & Vibration</h3>
                   <div className="w-full relative min-w-0" style={{ width: '100%', minHeight: 180, height: 180 }}>
                     <ResponsiveContainer width="100%" height={180} minWidth={0} minHeight={1} debounce={50} initialDimension={{ width: 400, height: 180 }}>
                       <LineChart data={chartData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
@@ -444,6 +532,8 @@ function App() {
                         <YAxis domain={['auto', 'auto']} tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.6)' }} stroke="rgba(255,255,255,0.3)" />
                         <Tooltip contentStyle={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.15)' }} />
                         <Line type="monotone" dataKey="temp" stroke="#ef4444" dot={false} strokeWidth={2} name="Temperature (°C)" />
+                        <Line type="monotone" dataKey="bladeAngle" stroke="#a855f7" dot={false} strokeWidth={2} name="Blade angle (°)" />
+                        <Line type="monotone" dataKey="vibration" stroke="#f97316" dot={false} strokeWidth={2} name="Vibration" />
                       </LineChart>
                     </ResponsiveContainer>
                     {chartData.length === 0 && (
@@ -633,6 +723,30 @@ function App() {
                       </div>
                     </div>
                   </div>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-xl bg-white/5 border border-white/10 p-5">
+              <h3 className="text-sm font-medium text-white/70 mb-4 flex items-center gap-2">
+                <AlertIcon className="w-5 h-5 text-amber-400" />
+                Alerts
+              </h3>
+              <div className="space-y-2 max-h-32 overflow-y-auto mb-6">
+                {(alerts ?? []).filter((a) => !selectedTurbineId || a.turbineId === selectedTurbineId).map((a) => (
+                  <div
+                    key={a.id}
+                    className={`p-2 rounded-lg text-sm flex flex-wrap items-center gap-2 border ${
+                      a.severity === 2 ? 'bg-red-500/10 border-red-500/40' : a.severity === 1 ? 'bg-amber-500/10 border-amber-500/40' : 'bg-white/5 border-white/10'
+                    }`}
+                  >
+                    <span className="text-white/80">{a.message}</span>
+                    <span className="text-white/50 text-xs">{a.turbineId}</span>
+                    <span className="text-white/40 text-xs">{formatTime(a.timestamp)}</span>
+                  </div>
+                ))}
+                {(!alerts || alerts.length === 0) && (
+                  <p className="text-white/40 text-sm">No alerts</p>
                 )}
               </div>
             </div>

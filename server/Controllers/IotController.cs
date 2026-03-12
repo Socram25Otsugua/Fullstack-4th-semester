@@ -1,13 +1,13 @@
-using System.Text.Json;
 using Mqtt.Controllers;
 using server;
+using server.Dtos;
 
 public class IotController(ILogger<IotController> logger, MyDbContext db) : MqttController
 {
     [MqttRoute("station/our-farm/sensor/{sensorId}/telemetry")]
     public async Task ListenForMeasurements(Measurement m, string sensorId)
     {
-        logger.LogInformation(JsonSerializer.Serialize(m));
+        logger.LogInformation("{Measurement}", System.Text.Json.JsonSerializer.Serialize(m));
         m.Id = Guid.NewGuid();
         db.Measurements.Add(m);
         db.SaveChanges();
@@ -38,5 +38,26 @@ public class IotController(ILogger<IotController> logger, MyDbContext db) : Mqtt
         db.TurbineMetrics.Add(m);
         await db.SaveChangesAsync();
         logger.LogInformation("Saved TurbineMetric for {TurbineId}: power={Power}kW wind={Wind}m/s", turbineId, m.PowerOutputKw, m.WindSpeedMs);
+    }
+
+    [MqttRoute("turbine/{turbineId}/alerts")]
+    public async Task ListenForTurbineAlerts(TurbineAlertDto dto, string turbineId)
+    {
+        var severity = (dto.Severity ?? "info").ToLowerInvariant() switch
+        {
+            "critical" => AlertSeverity.Critical,
+            "warning" or "high" => AlertSeverity.Warning,
+            _ => AlertSeverity.Info
+        };
+        db.Alerts.Add(new Alert
+        {
+            Id = Guid.NewGuid(),
+            TurbineId = turbineId,
+            Severity = severity,
+            Message = dto.Message ?? "Alert",
+            Timestamp = DateTimeOffset.UtcNow,
+            Acknowledged = false
+        });
+        await db.SaveChangesAsync();
     }
 }
