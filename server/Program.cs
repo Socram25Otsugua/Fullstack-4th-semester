@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Mqtt.Controllers;
@@ -10,6 +11,7 @@ using NSwag;
 using NSwag.Generation.Processors.Security;
 using server;
 using server.Options;
+using server.Services;
 using StateleSSE.AspNetCore;
 using StateleSSE.AspNetCore.GroupRealtime;
 using Testcontainers.PostgreSql;
@@ -19,16 +21,22 @@ var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 var connectionStrings = new ConnectionStrings();
 configuration.GetSection(nameof(ConnectionStrings)).Bind(connectionStrings);
+if (!configuration.GetSection(nameof(ConnectionStrings)).Exists())
+    connectionStrings.UseSeaFullstackDataSources = true;
 if (string.IsNullOrWhiteSpace(connectionStrings.DbConnectionString))
 {
     var container = new PostgreSqlBuilder("postgres:15.1").Build();
     container.StartAsync().GetAwaiter().GetResult();
     connectionStrings.DbConnectionString = container.GetConnectionString();
 }
+if (string.IsNullOrWhiteSpace(connectionStrings.MqttBroker))
+{
+    connectionStrings.MqttBroker = "broker.hivemq.com";
+    connectionStrings.MqttPort = 1883;
+}
 
 builder.Services.AddSingleton(connectionStrings);
 
-// JWT: allow secret from Jwt:Secret or fallback to ConnectionStrings:Secret
 var jwtOptions = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
 if (string.IsNullOrWhiteSpace(jwtOptions.Secret))
     jwtOptions.Secret = connectionStrings.Secret ?? "";
@@ -38,8 +46,8 @@ builder.Services.Configure<JwtOptions>(options =>
     if (string.IsNullOrWhiteSpace(options.Secret) && !string.IsNullOrWhiteSpace(connectionStrings.Secret))
         options.Secret = connectionStrings.Secret;
 });
-var jwtKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Secret));
 
+var jwtKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Secret));
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(o =>
     {
@@ -71,8 +79,6 @@ builder.Services.AddInMemorySseBackplane();
 builder.Services.AddEfRealtime();
 builder.Services.AddGroupRealtime();
 
-// i was here
-
 builder.Services.AddDbContext<MyDbContext>((sp, conf) =>
 {
     conf.UseNpgsql(connectionStrings.DbConnectionString);
@@ -102,6 +108,7 @@ builder.Services.AddProblemDetails(options =>
     };
 });
 builder.Services.AddSingleton<JwtService>();
+builder.Services.AddScoped<TurbineCommandService>();
 builder.Services.AddMqttControllers();
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -113,6 +120,7 @@ builder.Services.AddControllers()
 builder.Services.AddCors();
 builder.Services.AddScoped<Seeder>();
 
+
 var app = builder.Build();
 app.UseExceptionHandler();
 app.UseOpenApi();
@@ -120,7 +128,9 @@ app.UseSwaggerUi();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.UseDefaultFiles();
 app.UseStaticFiles();
+app.MapFallbackToFile("index.html");
 app.UseCors(c => 
     c.AllowAnyHeader()
         .AllowAnyMethod()
@@ -130,13 +140,16 @@ app.UseCors(c =>
 
 
 
- var mqttClient = app.Services.GetRequiredService<IMqttClientService>();
- await mqttClient.ConnectAsync("broker.hivemq.com", 1883);
- // await mqttClient.ConnectAsync(connectionStrings.MqttBroker, connectionStrings.MqttPort, "", "");
+var mqttClient = app.Services.GetRequiredService<IMqttClientService>();
+await mqttClient.ConnectAsync(connectionStrings.MqttBroker, connectionStrings.MqttPort);
+
 app.GenerateApiClientsFromOpenApi("../client/src/generated-ts-client.ts", "./openapi.json").GetAwaiter().GetResult();
 
 using(var scope = app.Services.CreateScope())
 {
+    var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+    db.Database.EnsureCreated();
+    
     scope.ServiceProvider.GetRequiredService<Seeder>().Seed();
 }
 

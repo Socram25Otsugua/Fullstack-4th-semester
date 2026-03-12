@@ -78,6 +78,150 @@
         }
       }
     },
+    "/GetTurbines": {
+      "get": {
+        "tags": [
+          "WebClient"
+        ],
+        "operationId": "WebClient_GetTurbines",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RealtimeListenResponseOfListOfWindTurbine"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/GetTurbineMetrics": {
+      "get": {
+        "tags": [
+          "WebClient"
+        ],
+        "operationId": "WebClient_GetTurbineMetrics",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "turbineId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RealtimeListenResponseOfListOfTurbineMetric"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/GetOperatorCommands": {
+      "get": {
+        "tags": [
+          "WebClient"
+        ],
+        "operationId": "WebClient_GetOperatorCommands",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "turbineId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RealtimeListenResponseOfListOfOperatorCommand"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/SendTurbineCommand": {
+      "post": {
+        "tags": [
+          "WebClient"
+        ],
+        "operationId": "WebClient_SendTurbineCommand",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendTurbineCommandRequest"
+              }
+            }
+          },
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
     "/sse": {
       "get": {
         "tags": [
@@ -224,6 +368,196 @@
         "properties": {
           "group": {
             "type": "string"
+          }
+        }
+      },
+      "RealtimeListenResponseOfListOfWindTurbine": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RealtimeListenResponse"
+          },
+          {
+            "type": "object",
+            "description": "Returned by subscribe endpoints with initial data. The client receives the current state\nimmediately and knows which SSE group to listen on for subsequent updates.",
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "type": "array",
+                "nullable": true,
+                "items": {
+                  "$ref": "#/components/schemas/WindTurbine"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "WindTurbine": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TurbineStatus"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TurbineStatus": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Running",
+          "Stopped",
+          "Maintenance",
+          "Fault"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ]
+      },
+      "RealtimeListenResponseOfListOfTurbineMetric": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RealtimeListenResponse"
+          },
+          {
+            "type": "object",
+            "description": "Returned by subscribe endpoints with initial data. The client receives the current state\nimmediately and knows which SSE group to listen on for subsequent updates.",
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "type": "array",
+                "nullable": true,
+                "items": {
+                  "$ref": "#/components/schemas/TurbineMetric"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "TurbineMetric": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "turbineId": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rpm": {
+            "type": "number",
+            "format": "double"
+          },
+          "powerOutputKw": {
+            "type": "number",
+            "format": "double"
+          },
+          "windSpeedMs": {
+            "type": "number",
+            "format": "double"
+          },
+          "bladeAngleDeg": {
+            "type": "number",
+            "format": "double"
+          },
+          "temperature": {
+            "type": "number",
+            "format": "double"
+          },
+          "vibration": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "RealtimeListenResponseOfListOfOperatorCommand": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RealtimeListenResponse"
+          },
+          {
+            "type": "object",
+            "description": "Returned by subscribe endpoints with initial data. The client receives the current state\nimmediately and knows which SSE group to listen on for subsequent updates.",
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "type": "array",
+                "nullable": true,
+                "items": {
+                  "$ref": "#/components/schemas/OperatorCommand"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "OperatorCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "turbineId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "commandType": {
+            "type": "string"
+          },
+          "parameters": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SendTurbineCommandRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "turbineId",
+          "commandType"
+        ],
+        "properties": {
+          "turbineId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "commandType": {
+            "type": "string",
+            "minLength": 1
+          },
+          "parameters": {
+            "type": "string",
+            "nullable": true
           }
         }
       }

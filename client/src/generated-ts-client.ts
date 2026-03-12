@@ -108,6 +108,165 @@ export class WebClientClient {
         return Promise.resolve<RealtimeListenResponseOfListOfMeasurement>(null as any);
     }
 
+    getTurbines(connectionId: string | undefined): Promise<RealtimeListenResponseOfListOfWindTurbine> {
+        let url_ = this.baseUrl + "/GetTurbines?";
+        if (connectionId === null)
+            throw new globalThis.Error("The parameter 'connectionId' cannot be null.");
+        else if (connectionId !== undefined)
+            url_ += "connectionId=" + encodeURIComponent("" + connectionId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetTurbines(_response);
+        });
+    }
+
+    protected processGetTurbines(response: Response): Promise<RealtimeListenResponseOfListOfWindTurbine> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RealtimeListenResponseOfListOfWindTurbine;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<RealtimeListenResponseOfListOfWindTurbine>(null as any);
+    }
+
+    getTurbineMetrics(connectionId: string | undefined, turbineId: string | undefined): Promise<RealtimeListenResponseOfListOfTurbineMetric> {
+        let url_ = this.baseUrl + "/GetTurbineMetrics?";
+        if (connectionId === null)
+            throw new globalThis.Error("The parameter 'connectionId' cannot be null.");
+        else if (connectionId !== undefined)
+            url_ += "connectionId=" + encodeURIComponent("" + connectionId) + "&";
+        if (turbineId === null)
+            throw new globalThis.Error("The parameter 'turbineId' cannot be null.");
+        else if (turbineId !== undefined)
+            url_ += "turbineId=" + encodeURIComponent("" + turbineId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetTurbineMetrics(_response);
+        });
+    }
+
+    protected processGetTurbineMetrics(response: Response): Promise<RealtimeListenResponseOfListOfTurbineMetric> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RealtimeListenResponseOfListOfTurbineMetric;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<RealtimeListenResponseOfListOfTurbineMetric>(null as any);
+    }
+
+    getOperatorCommands(connectionId: string | undefined, turbineId: string | null | undefined): Promise<RealtimeListenResponseOfListOfOperatorCommand> {
+        let url_ = this.baseUrl + "/GetOperatorCommands?";
+        if (connectionId === null)
+            throw new globalThis.Error("The parameter 'connectionId' cannot be null.");
+        else if (connectionId !== undefined)
+            url_ += "connectionId=" + encodeURIComponent("" + connectionId) + "&";
+        if (turbineId !== undefined && turbineId !== null)
+            url_ += "turbineId=" + encodeURIComponent("" + turbineId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetOperatorCommands(_response);
+        });
+    }
+
+    protected processGetOperatorCommands(response: Response): Promise<RealtimeListenResponseOfListOfOperatorCommand> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RealtimeListenResponseOfListOfOperatorCommand;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<RealtimeListenResponseOfListOfOperatorCommand>(null as any);
+    }
+
+    sendTurbineCommand(request: SendTurbineCommandRequest | undefined): Promise<FileResponse> {
+        let url_ = this.baseUrl + "/SendTurbineCommand";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/octet-stream"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processSendTurbineCommand(_response);
+        });
+    }
+
+    protected processSendTurbineCommand(response: Response): Promise<FileResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200 || status === 206) {
+            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
+            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
+            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
+            if (fileName) {
+                fileName = decodeURIComponent(fileName);
+            } else {
+                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
+                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
+            }
+            return response.blob().then(blob => { return { fileName: fileName, data: blob, status: status, headers: _headers }; });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<FileResponse>(null as any);
+    }
+
     connect(): Promise<void> {
         let url_ = this.baseUrl + "/sse";
         url_ = url_.replace(/[?&]$/, "");
@@ -180,6 +339,70 @@ export interface Measurement {
     humidity?: number;
     pressure?: number;
     lightLevel?: number;
+}
+
+/** Returned by subscribe endpoints with initial data. The client receives the current state immediately and knows which SSE group to listen on for subsequent updates. */
+export interface RealtimeListenResponseOfListOfWindTurbine extends RealtimeListenResponse {
+    data?: WindTurbine[] | undefined;
+}
+
+export interface WindTurbine {
+    id?: string;
+    name?: string;
+    location?: string;
+    status?: TurbineStatus;
+    createdAt?: string;
+}
+
+export enum TurbineStatus {
+    Running = 0,
+    Stopped = 1,
+    Maintenance = 2,
+    Fault = 3,
+}
+
+/** Returned by subscribe endpoints with initial data. The client receives the current state immediately and knows which SSE group to listen on for subsequent updates. */
+export interface RealtimeListenResponseOfListOfTurbineMetric extends RealtimeListenResponse {
+    data?: TurbineMetric[] | undefined;
+}
+
+export interface TurbineMetric {
+    id?: string;
+    turbineId?: string;
+    timestamp?: string;
+    rpm?: number;
+    powerOutputKw?: number;
+    windSpeedMs?: number;
+    bladeAngleDeg?: number;
+    temperature?: number;
+    vibration?: number;
+}
+
+/** Returned by subscribe endpoints with initial data. The client receives the current state immediately and knows which SSE group to listen on for subsequent updates. */
+export interface RealtimeListenResponseOfListOfOperatorCommand extends RealtimeListenResponse {
+    data?: OperatorCommand[] | undefined;
+}
+
+export interface OperatorCommand {
+    id?: string;
+    turbineId?: string;
+    userId?: string;
+    commandType?: string;
+    parameters?: string;
+    timestamp?: string;
+}
+
+export interface SendTurbineCommandRequest {
+    turbineId: string;
+    commandType: string;
+    parameters?: string | undefined;
+}
+
+export interface FileResponse {
+    data: Blob;
+    status: number;
+    fileName?: string;
+    headers?: { [name: string]: any };
 }
 
 export class ApiException extends Error {
