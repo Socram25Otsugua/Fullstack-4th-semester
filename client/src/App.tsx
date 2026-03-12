@@ -52,7 +52,6 @@ function setStoredToken(token: string | null) {
 }
 
 const authClient = new AuthClient(baseUrl)
-const restClient = new WebClientClient(baseUrl, createAuthFetch(getStoredToken))
 
 const STATUS_LABELS: Record<TurbineStatus, string> = {
   [TurbineStatus.Running]: 'OPERATIONAL',
@@ -121,25 +120,6 @@ function AlertIcon({ className }: { className?: string }) {
       <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" strokeLinecap="round" strokeLinejoin="round" />
       <line x1="12" y1="9" x2="12" y2="13" strokeLinecap="round" />
       <line x1="12" y1="17" x2="12.01" y2="17" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-function ClockIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M12 6v6l4 2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
-function CompassIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <circle cx="12" cy="12" r="10" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M16.24 7.76l-2.12 4.24-4.24 2.12 2.12-4.24 4.24-2.12z" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M12 2v4M12 18v4M2 12h4M18 12h4" strokeLinecap="round" />
     </svg>
   )
 }
