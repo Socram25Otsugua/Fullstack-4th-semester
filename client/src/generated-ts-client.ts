@@ -186,6 +186,43 @@ export class WebClientClient {
         return Promise.resolve<RealtimeListenResponseOfListOfTurbineMetric>(null as any);
     }
 
+    getAlerts(connectionId: string | undefined): Promise<RealtimeListenResponseOfListOfAlert> {
+        let url_ = this.baseUrl + "/GetAlerts?";
+        if (connectionId === null)
+            throw new globalThis.Error("The parameter 'connectionId' cannot be null.");
+        else if (connectionId !== undefined)
+            url_ += "connectionId=" + encodeURIComponent("" + connectionId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetAlerts(_response);
+        });
+    }
+
+    protected processGetAlerts(response: Response): Promise<RealtimeListenResponseOfListOfAlert> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as RealtimeListenResponseOfListOfAlert;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<RealtimeListenResponseOfListOfAlert>(null as any);
+    }
+
     getOperatorCommands(connectionId: string | undefined, turbineId: string | null | undefined): Promise<RealtimeListenResponseOfListOfOperatorCommand> {
         let url_ = this.baseUrl + "/GetOperatorCommands?";
         if (connectionId === null)
@@ -376,6 +413,26 @@ export interface TurbineMetric {
     bladeAngleDeg?: number;
     temperature?: number;
     vibration?: number;
+}
+
+/** Returned by subscribe endpoints with initial data. The client receives the current state immediately and knows which SSE group to listen on for subsequent updates. */
+export interface RealtimeListenResponseOfListOfAlert extends RealtimeListenResponse {
+    data?: Alert[] | undefined;
+}
+
+export interface Alert {
+    id?: string;
+    turbineId?: string;
+    severity?: AlertSeverity;
+    message?: string;
+    timestamp?: string;
+    acknowledged?: boolean;
+}
+
+export enum AlertSeverity {
+    Info = 0,
+    Warning = 1,
+    Critical = 2,
 }
 
 /** Returned by subscribe endpoints with initial data. The client receives the current state immediately and knows which SSE group to listen on for subsequent updates. */
