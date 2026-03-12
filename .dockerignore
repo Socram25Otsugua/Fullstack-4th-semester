@@ -1,0 +1,9 @@
+client/node_modules
+client/dist
+server/bin
+server/obj
+.git
+.gitignore
+*.md
+.env*
+.DS_Store

@@ -17,6 +17,8 @@ using StateleSSE.AspNetCore.GroupRealtime;
 using Testcontainers.PostgreSql;
 
 var builder = WebApplication.CreateBuilder(args);
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
 var configuration = builder.Configuration;
 var connectionStrings = new ConnectionStrings();
@@ -143,7 +145,8 @@ app.UseCors(c =>
 var mqttClient = app.Services.GetRequiredService<IMqttClientService>();
 await mqttClient.ConnectAsync(connectionStrings.MqttBroker, connectionStrings.MqttPort);
 
-app.GenerateApiClientsFromOpenApi("../client/src/generated-ts-client.ts", "./openapi.json").GetAwaiter().GetResult();
+if (app.Environment.IsDevelopment())
+    app.GenerateApiClientsFromOpenApi("../client/src/generated-ts-client.ts", "./openapi.json").GetAwaiter().GetResult();
 
 using(var scope = app.Services.CreateScope())
 {
