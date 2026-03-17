@@ -52,4 +52,27 @@ public class SeaFullstackMqttController(ILogger<SeaFullstackMqttController> logg
         await db.SaveChangesAsync();
         logger.LogDebug("Sea-fullstack telemetry: {TurbineId} power={Power}", dto.TurbineId, dto.PowerOutput);
     }
+    
+    [MqttRoute("farm/our-farm/windmill/{turbineId}/alert")]
+    public async Task HandleFarmAlerts(SeaFullstackAlertDto dto, string turbineId)
+    {
+        if (string.IsNullOrEmpty(dto.TurbineId)) return;
+        var severity = dto.Severity?.ToLowerInvariant() switch
+        {
+            "critical" => AlertSeverity.Critical,
+            "warning" or "high" => AlertSeverity.Warning,
+            _ => AlertSeverity.Info
+        };
+        db.Alerts.Add(new Alert
+        {
+            Id = Guid.NewGuid(),
+            TurbineId = dto.TurbineId,
+            Severity = severity,
+            Message = dto.Message ?? "Alert",
+            Timestamp = !string.IsNullOrEmpty(dto.Timestamp) ? DateTimeOffset.Parse(dto.Timestamp!) : DateTimeOffset.UtcNow,
+            Acknowledged = false
+        });
+        await db.SaveChangesAsync();
+        logger.LogInformation("Sea-fullstack alert: {TurbineId} {Message}", dto.TurbineId, dto.Message);
+    }
 }
