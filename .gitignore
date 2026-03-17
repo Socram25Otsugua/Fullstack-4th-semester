@@ -49,6 +49,7 @@ dist-ssr/
 !.env.example
 appsettings.Development.json
 **/appsettings.Development.json
+appsettings.json
 
 # Misc
 *.sw?
