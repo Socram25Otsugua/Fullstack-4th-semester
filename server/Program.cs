@@ -3,7 +3,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Mqtt.Controllers;
@@ -14,7 +13,6 @@ using server.Options;
 using server.Services;
 using StateleSSE.AspNetCore;
 using StateleSSE.AspNetCore.GroupRealtime;
-using Testcontainers.PostgreSql;
 
 var builder = WebApplication.CreateBuilder(args);
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
@@ -23,25 +21,11 @@ builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 var configuration = builder.Configuration;
 var connectionStrings = new ConnectionStrings();
 configuration.GetSection(nameof(ConnectionStrings)).Bind(connectionStrings);
-if (!configuration.GetSection(nameof(ConnectionStrings)).Exists())
-    connectionStrings.UseSeaFullstackDataSources = true;
-if (string.IsNullOrWhiteSpace(connectionStrings.DbConnectionString))
-{
-    var container = new PostgreSqlBuilder("postgres:15.1").Build();
-    container.StartAsync().GetAwaiter().GetResult();
-    connectionStrings.DbConnectionString = container.GetConnectionString();
-}
-if (string.IsNullOrWhiteSpace(connectionStrings.MqttBroker))
-{
-    connectionStrings.MqttBroker = "broker.hivemq.com";
-    connectionStrings.MqttPort = 1883;
-}
-
 builder.Services.AddSingleton(connectionStrings);
 
 var jwtOptions = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
 if (string.IsNullOrWhiteSpace(jwtOptions.Secret))
-    jwtOptions.Secret = connectionStrings.Secret ?? "";
+    jwtOptions.Secret = connectionStrings.Secret;
 builder.Services.Configure<JwtOptions>(options =>
 {
     configuration.GetSection(JwtOptions.SectionName).Bind(options);
@@ -64,7 +48,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
             ClockSkew = TimeSpan.FromMinutes(1),
         };
-        o.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+        o.Events = new JwtBearerEvents
         {
             OnAuthenticationFailed = ctx =>
             {
@@ -76,7 +60,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 builder.Services.Configure<HostOptions>(opts => opts.ShutdownTimeout = TimeSpan.FromSeconds(0));
-
 builder.Services.AddInMemorySseBackplane();
 builder.Services.AddEfRealtime();
 builder.Services.AddGroupRealtime();
